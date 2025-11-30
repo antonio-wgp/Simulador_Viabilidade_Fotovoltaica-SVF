@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Viabilidade Fotovoltáica</title>
+    <style>
+        body {
+            height: calc(100vh * 2);
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            background-image:
+                url("{{ url_for('static', filename='fundoinicial.png') }}"),
+                url("{{ url_for('static', filename='fundofinal.png') }}");
+            background-size: 100% 50%;
+            background-repeat: no-repeat;
+            background-position: center top, center 100%;
+        }
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0 20px;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 22px;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
+            border: 2px solid #ccc;
+            border-radius: 50px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.8);
+            padding: 29px;
+            width: 80%;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            width: 105%;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between; /* Alinha os itens ao lado */
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-section label {
+            white-space: nowrap;
+            width: 300px;
+        }
+
+        .explicacao-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
+            align-items: flex-start;
+        }
+
+        .explicacao-btn {
+            cursor: pointer;
+        }
+
+        .explicacao {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            display: none;
+            width: 100%;
+        }
+
+        .titulo-pagina {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .titulo-formulario {
+            text-align: left;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+         .explicacao p {
+            margin: 0;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .explicacao ul {
+            padding: 0;
+        }
+
+        .explicacao li {
+            list-style: none;
+            margin-bottom: 5px;
+        }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $(".explicacao-btn").click(function() {
+                var explicacao = $(this).next(".explicacao");
+                $(".explicacao").not(explicacao).hide();
+                explicacao.toggle();
+            });
+            $(".mostrar-meses-btn").click(function() {
+                $(".meses-form").toggle();
+                $(".media-form").toggle();
+                // Obtém o texto atual do botão
+                var textoBotao = $(this).text();
+                // Define o novo texto com base no texto atual
+                var novoTexto = (textoBotao === "Inserir Valores Mensais") ? "Inserir Média Anual" : "Inserir Valores Mensais";
+                // Define o novo texto no botão
+                $(this).text(novoTexto);
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1 class="titulo-pagina">Viabilidade Fotovoltáica</h1>  <!-- Adiciona o Titulo da pagina inicial -->
+    <div class="container">
+        <div class="form-container">
+            <h2 class="titulo-formulario">Formulário</h2>
+            <div class="form">
+                <form action="/submit" method="post">
+                    <div class="form-section">
+                        <label for="potencia_modulo">Potência do Módulo Fotovoltaico (Wp): </label>
+                        <select id="potencia_modulo" name="potencia_modulo" style="width: 250px; height: 28px;">
+                            <option value="550">550</option>
+                            <option value="405">405</option>
+                            <option value="700">700</option>
+                        </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="estado">Selecione um estado:</label>
+                            <select id="estado" onchange="atualizarCidades()" name="estado" style="width: 250px; height: 28px;" required>
+                                <option value="" disabled selected>Escolha um estado</option>
+                                {% for estado in estados %}
+                                    <option value="{{ loop.index0 }}">{{ estado }}</option>
+                                {% endfor %}
+                            </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="Cidade">Selecione uma cidade:</label>
+                        <select id="Cidade" name="Cidade" style="width: 250px; height: 28px;" required>
+                            <option value="{loop.index0}" disabled selected>Escolha uma cidade</option>
+                        </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="Concessionaria">Sua Concessionaria de energia: </label>
+                        <select id="Concessionaria" name="Concessionaria" style="width: 250px; height: 28px;" required>
+                            <option value="">Escolha sua Concessionária</option>
+                            {% for Concessionarias in Concessionaria %}
+                                <option value="{{ Concessionarias }}">{{ Concessionarias }}</option>
+                            {% endfor %}
+                        </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="rede">Tipo de rede: </label>
+                        <select id="rede" name="rede" style="width: 250px; height: 28px;">
+                            <option value="1">Monofásico</option>
+                            <option value="2">Bifásico</option>
+                            <option value="3">Trifásico</option>
+                        </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="ano_instalação">Ano que deseja instalar: </label>
+                            <select id="ano_instalação" name="ano_instalação" style="width: 250px; height: 28px;">
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                            <option value="2030">2030</option>
+                        </select><br>
+                    </div>
+                    <div class="form-section">
+                        <label for="cosip">Valor da Cosip (R$): </label>
+                        <input type="text" id="cosip" name="cosip" style="width: 245px; height: 25px;"><br>
+                    </div>
+                    <div class="media-form">
+                      <div class="form-section">
+                          <label for="media_kwh">Insetir média anual (kWh): </label>
+                          <input type="number" value = 0 id="media_kwh" name="media_kwh" style="width: 245px; height: 25px;"><br>
+                      </div>
+                    </div>
+                    <button class="mostrar-meses-btn" type="button" style="width: 245px; height: 25px;">Inserir Valores Mensais (Opcional)</button>
+                    <div class="meses-form" style="display: none;">
+                        <div class="form-section">
+                            <label for="jan">Consumo Janeiro (kWh): </label>
+                            <input type="number" value = 0 id="jan" name="jan" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="fev">Consumo Fevereiro (kWh): </label>
+                            <input type="number" value = 0 id="fev" name="fev" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="mar">Consumo Março (kWh): </label>
+                            <input type="number" value = 0 id="mar" name="mar" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="abr">Consumo Abril (kWh): </label>
+                            <input type="number" value = 0 id="abr" name="abr" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="mai">Consumo Maio (kWh): </label>
+                            <input type="number" value = 0 id="mai" name="mai" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="jun">Consumo Junho (kWh): </label>
+                            <input type="number" value = 0 id="jun" name="jun" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="jul">Consumo Julho (kWh): </label>
+                            <input type="number" value = 0 id="jul" name="jul" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="ago">Consumo Agosto (kWh): </label>
+                            <input type="number" value = 0 id="ago" name="ago" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="sep">Consumo Setembro (kWh): </label>
+                            <input type="number" value = 0 id="sep" name="sep" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="out">Consumo Outubro (kWh): </label>
+                            <input type="number" value = 0 id="out" name="out" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="nov">Consumo Novembro (kWh): </label>
+                            <input type="number" value = 0 id="nov" name="nov" style="width: 245px; height: 25px;"><br>
+                        </div>
+                        <div class="form-section">
+                            <label for="dez">Consumo Dezembro (kWh): </label>
+                            <input type="number" value = 0 id="dez" name="dez" style="width: 245px; height: 25px;"><br>
+                        </div>
+                    </div>
+                    <input type="submit" value="Enviar">
+                </form>
+                <script>
+                    var cidadesPorEstado = {{ cidades_por_estado | tojson | safe }};
+
+                    function atualizarCidades() {
+                        var estadoSelecionado = document.getElementById("estado").value;
+                        var selectCidade = document.getElementById("Cidade");
+                        selectCidade.innerHTML = "<option value='' disabled selected>Escolha uma cidade</option>";
+
+                        var cidades = cidadesPorEstado[estadoSelecionado];
+
+                        if (cidades !== undefined) {
+                            for (var i = 0; i < cidades.length; i++) {
+                                var option = document.createElement("option");
+                                option.value = cidades[i];
+                                option.text = cidades[i];
+                                selectCidade.appendChild(option);
+                            }
+                        }
+                    }
+                </script>
+            </div>
+        </div>
+        <div class="explicacao-container">
+            <h2>Analise dos Paramêtros</h2>
+            <div class="explicacao-btn">
+                <button>Lei 14300</button>
+            </div>
+            <div class="explicacao">
+                <p>Considera-se a reintegração regulatória, de acordo com a lei 14.300, art.27,
+                    de forma progressiva, 15% ao ano de 2023 até 2028.</p>
+            </div>
+            <div class="explicacao-btn">
+                <button>Premissas Econômicas</button>
+            </div>
+            <div class="explicacao">
+                <p style="display: block;">PIS: 0,65%</p>
+                <p style="display: block;">Cofins: 7,60%</p>
+                <p style="display: block;">ICMS: 12%</p>
+                <p style="display: block;">Manutenções: 1%</p>
+                <p style="display: block;">Taxa Interna de Retorno (TIR): 10%</p>
+                <div class="taxa-simultaneidade">
+                    <p class="titulo">Taxa de simultaneidade:</p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li class="taxa-item">Residência: 30%</li>
+                            <li class="taxa-item">Comércio: 50%</li>
+                        </ul>
+                </div>
+            </div>
+            <div class="explicacao-btn">
+                <button>Qual Potência de Modulo devo usar?</button>
+            </div>
+            <div class="explicacao">
+                <p>A potência dos modulos fotovoltaicos influênciam diretamente na quantidade de placas que
+                irá ter no telhado, caso você tenha um tenhado menor opite por uma placa de potência maior
+                caso seu telhado for grande fica a seu critério escolher qual usar.</p>
+            </div>
+            <div class="explicacao-btn">
+                <button>Taxa Interna de Retorno</button>
+            </div>
+            <div class="explicacao">
+                <p>Breve explicação de como funciona o T.I.R</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
